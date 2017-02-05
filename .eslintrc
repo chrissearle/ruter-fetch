@@ -1,0 +1,25 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended"],
+  "rules": {
+    "eqeqeq": 2,
+    "semi": [2, "never"],
+    "no-var": 2,
+    "no-unused-vars": 2,
+    "quotes": [2, "single"],
+    "prefer-const": 2,
+    "prefer-template": 2,
+    "no-trailing-spaces": 2,
+    "no-mixed-spaces-and-tabs": 2,
+    "indent": [2, 4, {"SwitchCase": 1}],
+    "eol-last": 2,
+    "no-console": 0
+  }
+}
