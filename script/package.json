@@ -7,7 +7,7 @@
     "lint": "eslint src",
     "compile": "babel --presets es2015 -d lib/ src/",
     "compilew": "babel --presets es2015 -w -d lib/ src/",
-    "fetch": "node lib/index.js",
+    "fetch": "node lib/index.js"
   },
   "devDependencies": {
     "babel-cli": "^6.22.2",
