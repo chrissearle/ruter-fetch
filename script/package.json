@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "moment": "^2.17.1",
-    "node-fetch": "^1.6.3"
+    "ruter-api": "^1.0.4"
   }
 }
