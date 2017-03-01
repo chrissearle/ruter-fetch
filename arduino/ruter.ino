@@ -27,15 +27,16 @@ const int kNetworkTimeout = 30*1000;
 const int kNetworkDelay = 1000;
 
 char *lines[] = {
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  ""
+  "               ",
+  "               ",
+  "               ",
+  "               ",
+  "               ",
+  "               ",
+  "               ",
+  "               "
 };
+
 
 void setup(void) {
   Serial.begin(115200);
@@ -46,11 +47,11 @@ void setup(void) {
 
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     Serial.print(".");
     delay(500);
   }
-
   Serial.println();
   Serial.println("Connected");
   
@@ -72,12 +73,7 @@ void updateLines(const char *data) {
       Serial.println(line);
       
       if (strlen(pch) > 8 && line < 8) {
-        // How to safely update the global lines?
-        // Tried just assigning - lines[line] = pch
-        // Mostly works - sometimes gets garbage - never see line 0
-
-        // This seens to repeat the last line on top of all lines or some such oddness
-        sprintf(lines[line], "%s", pch);
+        lines[line] = pch;
 
         line += 1;
       }
@@ -129,6 +125,8 @@ void fetchData() {
             delay(kNetworkDelay);
           }
         }
+
+        updateLines(body.c_str());
       } else {
         Serial.print("Header skip failed");
         Serial.print(err);
@@ -143,8 +141,6 @@ void fetchData() {
   }
 
   http.stop();
-
-  updateLines(body.c_str());
 }
 
 void drawLineAtHeight(u8g2_uint_t height) {
@@ -162,6 +158,7 @@ void drawTextInRow(int row, const char *text) {
 }
 
 void drawPage(int start, int count) {
+  Serial.printf("%d %d %s %x \n", start, count, lines[start], lines[start][0]);
   drawTitle(lines[start]);
   for(int i = 1; i < count; i++) {
     drawTextInRow(i,lines[start + i]);
