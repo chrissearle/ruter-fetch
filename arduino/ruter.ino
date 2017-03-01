@@ -3,6 +3,10 @@
 #include <SPI.h>
 #include <U8g2lib.h>
 
+#include <ESP8266WiFi.h>
+#include <HttpClient.h>
+
+
 #define CLK_PIN D5
 #define DIN_PIN D7
 #define CE_PIN D1
@@ -10,27 +14,137 @@
 #define RST_PIN D2
 #define LIGHT_PIN D0
 
+const char* ssid = "**********";
+const char* password = "**********";
+
 U8G2_PCD8544_84X48_1_4W_SW_SPI u8g2(U8G2_R0, CLK_PIN, DIN_PIN, CE_PIN, DC_PIN, RST_PIN);
 
 u8g2_uint_t rowHeight = 12;
 
+const char *kHostname = "**********";
+const char *kPath = "**********";
+const int kNetworkTimeout = 30*1000;
+const int kNetworkDelay = 1000;
+
 char *lines[] = {
-  "Mot Sentrum",
-  "4 Bergkr-19:34",
-  "5 Vestli-19:39",
-  "5 Ringen-19:43",
-  "Fra sentrum",
-  "4 Vestli-19:39",
-  "5 Sognsv-19:42",
-  "5 Ringen-19:50"
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  ""
 };
 
-
 void setup(void) {
+  Serial.begin(115200);
+  
+
+  Serial.print("Connecting to: ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.println();
+  Serial.println("Connected");
+  
   pinMode(LIGHT_PIN, OUTPUT);
-  digitalWrite(LIGHT_PIN, LOW);	
+  digitalWrite(LIGHT_PIN, LOW);  
   
   u8g2.begin();
+}
+
+void updateLines(const char *data) {
+    char* pch = NULL;
+
+    int line = 0;
+
+    pch = strtok((char *)data, "\r\n");
+
+    while (pch != NULL) {
+      Serial.println(pch);
+      Serial.println(line);
+      
+      if (strlen(pch) > 8 && line < 8) {
+        // How to safely update the global lines?
+        // Tried just assigning - lines[line] = pch
+        // Mostly works - sometimes gets garbage - never see line 0
+
+        // This seens to repeat the last line on top of all lines or some such oddness
+        sprintf(lines[line], "%s", pch);
+
+        line += 1;
+      }
+
+      pch = strtok(NULL, "\r\n");
+    }
+
+    for (int i = 0; i < 8; i++) {
+      Serial.println(lines[i]);
+    }
+}
+
+void fetchData() {
+  int err = 0;
+
+  String body = "";
+  
+  WiFiClient client;
+  HttpClient http(client);
+
+  err = http.get(kHostname, kPath);
+
+  if (err >= 0) {
+    err = http.responseStatusCode();
+    
+    if (err >= 200 && err < 300) {
+      err = http.skipResponseHeaders();
+
+      if (err >= 0) {
+        int bodyLen = http.contentLength();
+
+        unsigned long timeoutStart = millis();
+        char c;
+
+        while (
+          (http.connected() || http.available()) &&
+          ((millis() - timeoutStart) < kNetworkTimeout)
+          ) {
+
+          if (http.available()) {
+            c = http.read();
+
+            body = body + c;
+
+            bodyLen--;
+
+            timeoutStart = millis();
+          } else  {
+            delay(kNetworkDelay);
+          }
+        }
+      } else {
+        Serial.print("Header skip failed");
+        Serial.print(err);
+      }
+    } else {
+      Serial.print("Fetch failed");
+      Serial.print(err);
+    }
+  } else {
+    Serial.print("Connect failed");
+    Serial.print(err);
+  }
+
+  http.stop();
+
+  updateLines(body.c_str());
 }
 
 void drawLineAtHeight(u8g2_uint_t height) {
@@ -47,7 +161,7 @@ void drawTextInRow(int row, const char *text) {
   u8g2.drawStr(7,((row + 1) * rowHeight) - 2,text);
 }
 
-void drawPage(char *lines[], int start, int count) {
+void drawPage(int start, int count) {
   drawTitle(lines[start]);
   for(int i = 1; i < count; i++) {
     drawTextInRow(i,lines[start + i]);
@@ -62,13 +176,14 @@ void showPage(int offset) {
     drawLineAtHeight(rowHeight * 2);
     drawLineAtHeight(rowHeight * 3);
 
-    drawPage(lines, offset, 4);
+    drawPage(offset, 4);
 
   } while ( u8g2.nextPage() );
 
 }
 
 void loop(void) {
+  fetchData();
   showPage(0);
   delay(5000);
   showPage(4);
