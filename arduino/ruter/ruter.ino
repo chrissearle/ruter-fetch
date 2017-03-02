@@ -26,17 +26,10 @@ const char *kPath = "**********";
 const int kNetworkTimeout = 30*1000;
 const int kNetworkDelay = 1000;
 
-char *lines[] = {
-  "               ",
-  "               ",
-  "               ",
-  "               ",
-  "               ",
-  "               ",
-  "               ",
-  "               "
-};
+#define ROWS 16
+#define MAX_LINE 16
 
+char *lines[ROWS][MAX_LINE] = { '\0' };
 
 void setup(void) {
   Serial.begin(115200);
@@ -63,27 +56,25 @@ void setup(void) {
 
 void updateLines(const char *data) {
     char* pch = NULL;
-
+    
     int line = 0;
 
-    pch = strtok((char *)data, "\r\n");
+    char *c = strdup(data);
+
+    pch = strtok((char *)c, "\r\n");
 
     while (pch != NULL) {
-      Serial.println(pch);
-      Serial.println(line);
-      
-      if (strlen(pch) > 8 && line < 8) {
-        lines[line] = pch;
+        if (strlen(pch) > 8 && line < ROWS) {
+            strncpy( (char*)lines[line], pch, MAX_LINE - 1);
+            lines[line][MAX_LINE - 1]='\0';
+            
+            line += 1;
+        }
 
-        line += 1;
-      }
-
-      pch = strtok(NULL, "\r\n");
+        pch = strtok(NULL, "\r\n");
     }
-
-    for (int i = 0; i < 8; i++) {
-      Serial.println(lines[i]);
-    }
+    
+    free(c);
 }
 
 void fetchData() {
@@ -158,10 +149,9 @@ void drawTextInRow(int row, const char *text) {
 }
 
 void drawPage(int start, int count) {
-  Serial.printf("%d %d %s %x \n", start, count, lines[start], lines[start][0]);
-  drawTitle(lines[start]);
+  drawTitle(lines[start][0]);
   for(int i = 1; i < count; i++) {
-    drawTextInRow(i,lines[start + i]);
+    drawTextInRow(i,lines[start + i][0]);
   }
 }
 
