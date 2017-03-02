@@ -78,11 +78,13 @@ void updateLines(const char *data) {
 }
 
 void fetchData() {
+  Serial.println("Fetching");
+  
   int err = 0;
 
   String body = "";
   
-  WiFiClient client;
+  WiFiClient client;  
   HttpClient http(client);
 
   err = http.get(kHostname, kPath);
@@ -117,6 +119,8 @@ void fetchData() {
           }
         }
 
+        Serial.println("Body fetched");
+        
         updateLines(body.c_str());
       } else {
         Serial.print("Header skip failed");
@@ -149,13 +153,15 @@ void drawTextInRow(int row, const char *text) {
 }
 
 void drawPage(int start, int count) {
-  drawTitle(lines[start][0]);
+  drawTitle((char *)lines[start]);
   for(int i = 1; i < count; i++) {
-    drawTextInRow(i,lines[start + i][0]);
+    drawTextInRow(i,(char *)lines[start + i]);
   }
 }
 
 void showPage(int offset) {
+  Serial.print("Showing page at offset ");
+  Serial.println(offset);
   u8g2.firstPage();
   
   do {
@@ -171,8 +177,8 @@ void showPage(int offset) {
 
 void loop(void) {
   fetchData();
-  showPage(0);
-  delay(5000);
-  showPage(4);
-  delay(5000);
+  for (int i = 0; i < 4; i++) {
+    showPage(i * 4);
+    delay(5000);
+  }
 }
