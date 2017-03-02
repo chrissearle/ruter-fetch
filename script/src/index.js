@@ -1,9 +1,19 @@
 import ruter from 'ruter-api'
 import moment from 'moment'
-import { forEach, chunk, range } from 'lodash'
+import { forEach, chunk, range, flatten, slice } from 'lodash'
 import { createWriteStream } from 'fs'
 
+function padToLength(data, length) {
+    forEach(range(length - data.length), () => {
+        data.push('')
+    })
+
+    return data
+}
+
 function outputLines(lines) {
+    const output = slice(lines, 0, 16).join('\n')
+
     if (process.argv.length > 2) {
         const file = createWriteStream(process.argv[2])
 
@@ -11,28 +21,33 @@ function outputLines(lines) {
             console.log(err)
         })
 
-        file.write(lines)
+        file.write(output)
 
         file.end()
     } else {
-        console.log(lines)
+        console.log(output)
     }
+}
+
+function createSingleBlock(title, lines) {
+    return padToLength(flatten([
+        title,
+        lines
+    ]), 4)
 }
 
 function chunksToString(title, chunks) {
     const result = []
 
     if (chunks.length > 0) {
-        result.push(title)
-        result.push(...chunks[0])
+        result.push(createSingleBlock(title, chunks[0]))
     }
 
     if (chunks.length > 1) {
-        result.push(`${title} 2`)
-        result.push(...chunks[1])
+        result.push(createSingleBlock(`${title} 2`, chunks[1]))
     }
 
-    return result.join('\n')
+    return flatten(result)
 }
 
 ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
@@ -61,11 +76,14 @@ ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
         }
     })
 
-    let lines = [chunksToString("Mot sentrum", chunk(mot, 3)), chunksToString("Fra sentrum", chunk(fra, 3))].join('\n')
+    const motLines = chunksToString('Mot sentrum', chunk(mot, 3))
+    const fraLines = chunksToString('Fra sentrum', chunk(fra, 3))
 
-    forEach(range(16 - lines.split('\n').length), () => {
-        lines = `${lines}\n`
-    })
+    const lines = flatten([motLines, fraLines])
 
-    outputLines(lines)
+    if (lines.length > 8) {
+        outputLines(padToLength(lines, 16))
+    } else {
+        outputLines(padToLength(flatten([lines, lines], 16)))
+    }
 })
