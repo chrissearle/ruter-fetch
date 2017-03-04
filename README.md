@@ -26,19 +26,19 @@ Connections:
 
 Screen
 
-1 RST - D2 
-2 CE - D1
-3 DC - D6
-4 DIN - D7
-5 CLK - D5
-6 VCC - 3V3
-7 LIGHT - D0
-8 GND - G
+* 1 RST - D2 
+* 2 CE - D1
+* 3 DC - D6
+* 4 DIN - D7
+* 5 CLK - D5
+* 6 VCC - 3V3
+* 7 LIGHT - D0
+* 8 GND - G
 
 PIR
 
 Look at PIR from the board side - pins at top
 
-Left - G
-Middle - D4
-Right - 5V
+* Left - G
+* Middle - D4
+* Right - 5V
