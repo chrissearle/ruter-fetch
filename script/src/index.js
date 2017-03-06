@@ -1,18 +1,9 @@
 import ruter from 'ruter-api'
 import moment from 'moment'
-import { forEach, chunk, range, flatten, slice } from 'lodash'
 import { createWriteStream } from 'fs'
 
-function padToLength(data, length) {
-    forEach(range(length - data.length), () => {
-        data.push('')
-    })
-
-    return data
-}
-
-function outputLines(lines) {
-    const output = slice(lines, 0, 16).join('\n')
+function outputLines(data) {
+    const output = JSON.stringify(data)
 
     if (process.argv.length > 2) {
         const file = createWriteStream(process.argv[2])
@@ -27,27 +18,6 @@ function outputLines(lines) {
     } else {
         console.log(output)
     }
-}
-
-function createSingleBlock(title, lines) {
-    return padToLength(flatten([
-        title,
-        lines
-    ]), 4)
-}
-
-function chunksToString(title, chunks) {
-    const result = []
-
-    if (chunks.length > 0) {
-        result.push(createSingleBlock(title, chunks[0]))
-    }
-
-    if (chunks.length > 1) {
-        result.push(createSingleBlock(`${title} 2`, chunks[1]))
-    }
-
-    return flatten(result)
 }
 
 ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
@@ -67,23 +37,27 @@ ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
 
         const ts = moment(timestamp).format('HH:mm')
 
-        const display = `${line} ${route.substring(0, 6)}-${ts}`
+        const slot = {
+            line: line,
+            dest: route,
+            time: ts
+        }
 
         if (platform === '1') {
-            mot.push(display)
+            mot.push(slot)
         } else {
-            fra.push(display)
+            fra.push(slot)
         }
     })
 
-    const motLines = chunksToString('Mot sentrum', chunk(mot, 3))
-    const fraLines = chunksToString('Fra sentrum', chunk(fra, 3))
-
-    const lines = flatten([motLines, fraLines])
-
-    if (lines.length > 8) {
-        outputLines(padToLength(lines, 16))
-    } else {
-        outputLines(padToLength(flatten([lines, lines], 16)))
-    }
+    outputLines({
+        up: {
+            title: 'Mot sentrum',
+            times: mot
+        },
+        down: {
+            title: 'Fra sentrum',
+            times: fra
+        }
+    })
 })
