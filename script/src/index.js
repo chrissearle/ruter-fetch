@@ -39,7 +39,7 @@ ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
 
         const slot = {
             line: line,
-            dest: route,
+            dest: route.substring(0, 15),
             time: ts
         }
 
@@ -53,11 +53,11 @@ ruter.api('StopVisit/GetDepartures/3010360', {}, response => {
     outputLines({
         up: {
             title: 'Mot sentrum',
-            times: mot
+            times: mot.slice(0, 6)
         },
         down: {
             title: 'Fra sentrum',
-            times: fra
+            times: fra.slice(0, 6)
         }
     })
 })
