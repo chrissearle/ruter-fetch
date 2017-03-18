@@ -29,11 +29,11 @@ u8g2_uint_t rowHeight = 12;
 const int kNetworkTimeout = 30*1000;
 const int kNetworkDelay = 1000;
 
-unsigned long lastUpdateFetchMillis = 0L;
-unsigned long lastUpdateScreenMillis = 0L;
-
 const unsigned long pollIntervalFetchMillis = 60L * 1000;
 const unsigned long pollIntervalScreenMillis = 5L * 1000;
+
+unsigned long lastUpdateFetchMillis = -pollIntervalFetchMillis;
+unsigned long lastUpdateScreenMillis = -pollIntervalScreenMillis;
 
 bool showUp = true;
 int screenToShow = 0;
